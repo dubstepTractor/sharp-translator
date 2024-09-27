@@ -1,0 +1,6 @@
+﻿var x, y:Logical;
+begin
+    x := !0;
+    y := x & 1;
+end;
+print x;
