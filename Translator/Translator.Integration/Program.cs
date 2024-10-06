@@ -1,26 +1,10 @@
-﻿string filePath = "C:\\Users\\timofey.latypov\\source\\repos\\Translator\\Translator.Integration\\code.txt";
-LexicalAnalyzer.Initialize(filePath);
+﻿using Translator.Core;
 
-while (LexicalAnalyzer.CurrentLexem != Lexems.EOF)
-{
-    Console.WriteLine("\"" + LexicalAnalyzer.CurrentName + "\" |" + LexicalAnalyzer.CurrentLexem);
-    LexicalAnalyzer.ParseNextLexem();
-}
+string sourceFilePath = "D:\\Prog\\sharp-translator\\Translator\\Translator.Integration\\code.txt";
+string compiledFilePath = "D:\\Prog\\sharp-translator\\Translator\\Translator.Integration\\compile.asm";
+var syntaxAnalyzer = new SyntaxAnalyzer();
+syntaxAnalyzer.Compile(sourceFilePath);
+File.WriteAllText(compiledFilePath, string.Join("\n", CodeGenerator.GetGeneratedCode()));
+Console.WriteLine(string.Join("\n", CodeGenerator.GetGeneratedCode()));
 
 Reader.Close();
-
-
-var nameTable = new NameTable();
-LexicalAnalyzer.Initialize(filePath);
-
-while (LexicalAnalyzer.CurrentLexem != Lexems.EOF)
-{
-    if (LexicalAnalyzer.CurrentLexem == Lexems.Name &&
-        nameTable.FindByName(LexicalAnalyzer.CurrentName).Equals(default(Identifier)))
-    {
-        nameTable.AddIdentifier(LexicalAnalyzer.CurrentName, tCat.Var);
-    }
-    LexicalAnalyzer.ParseNextLexem();
-}
-
-Console.WriteLine(string.Join(",", nameTable.GetIdentifiers().Select(x => x.Name)));

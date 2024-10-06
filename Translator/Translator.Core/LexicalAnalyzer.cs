@@ -1,49 +1,95 @@
-﻿using System;
-using Translator.Core;
-
+﻿/// <summary>
+/// Перечисление, представляющее различные лексемы или токены, используемые в лексическом анализе.
+/// </summary>
 public enum Lexems
 {
-    None, Name, Number, Begin, End, Var, Print, Assign,
-    Plus, Minus, Multiplication, Division,
+    None, Name, True, False, Logical, Begin, End, Var, Print, Assign,
     LeftBracket, RightBracket, Semi, Comma, EOF,
-    UnaryOp, BinaryOp, Colon
+    Disjunction, Conjunction, Implication,
+    Negotiation, BinaryOp, Colon
 }
 
+/// <summary>
+/// Структура, представляющая ключевое слово с его соответствующей лексемой.
+/// </summary>
 public struct Keyword
 {
+    /// <summary>
+    /// Ключевое слово
+    /// </summary>
     public string word;
+
+    /// <summary>
+    /// Соответствующая ключевому слову лексема
+    /// </summary>
     public Lexems lex;
 }
 
+/// <summary>
+/// Статический класс, ответственный за лексический анализ исходного кода.
+/// </summary>
 public static class LexicalAnalyzer
 {
+    /// <summary>
+    /// Массив ключевых слов
+    /// </summary>
     private static Keyword[] keywords;
+
+    /// <summary>
+    /// Указатель для отслеживания добавленных ключевых слов
+    /// </summary>
     private static int keywordsPointer;
+
+    /// <summary>
+    /// Текущая лексема, которая анализируется
+    /// </summary>
     private static Lexems currentLexem;
+
+    /// <summary>
+    /// Текущее имя идентификатора
+    /// </summary>
     private static string currentName;
 
+    /// <summary>
+    /// Максимальная длина названия идентификатора
+    /// </summary>
     private const int MaxIdentifierLength = 50;
 
+    /// <summary>
+    /// Инициализирует лексический анализатор с указанным путем к файлу.
+    /// </summary>
+    /// <param name="filePath">Путь к исходному файлу.</param>
     public static void Initialize(string filePath)
     {
         keywords = new Keyword[20];
         keywordsPointer = 0;
 
-        AddKeyword("begin", Lexems.Begin);
-        AddKeyword("end", Lexems.End);
-        AddKeyword("var", Lexems.Var);
-        AddKeyword("print", Lexems.Print);
+        AddKeyword("Begin", Lexems.Begin);
+        AddKeyword("End", Lexems.End);
+        AddKeyword("Var", Lexems.Var);
+        AddKeyword("Print", Lexems.Print);
+        AddKeyword("Logical", Lexems.Logical);
 
         Reader.Initialize(filePath);
         currentLexem = Lexems.None;
     }
 
+    /// <summary>
+    /// Добавляет ключевое слово в список ключевых слов.
+    /// </summary>
+    /// <param name="keyword">Ключевое слово в виде строки.</param>
+    /// <param name="lex">Связанная лексема.</param>
     private static void AddKeyword(string keyword, Lexems lex)
     {
         Keyword kw = new Keyword { word = keyword, lex = lex };
         keywords[keywordsPointer++] = kw;
     }
 
+    /// <summary>
+    /// Получает лексему, связанную с указанным ключевым словом.
+    /// </summary>
+    /// <param name="keyword">Ключевое слово для получения лексемы.</param>
+    /// <returns>Соответствующая лексема.</returns>
     private static Lexems GetKeywordLexem(string keyword)
     {
         for (int i = 0; i < keywordsPointer; i++)
@@ -54,6 +100,9 @@ public static class LexicalAnalyzer
         return Lexems.Name;
     }
 
+    /// <summary>
+    /// Парсит следующую лексему в исходном коде.
+    /// </summary>
     public static void ParseNextLexem()
     {
         while (char.IsWhiteSpace(Reader.CurrentSymbol))
@@ -71,37 +120,18 @@ public static class LexicalAnalyzer
         }
         else if (char.IsDigit(Reader.CurrentSymbol))
         {
-            ParseNumber();
-        }
-        else if (Reader.CurrentSymbol == '=')
-        {
-            currentName = null;
-            Reader.ReadNextSymbol();
-            currentLexem = Lexems.Assign;
-        }
-        else if (Reader.CurrentSymbol == '+')
-        {
-            currentName = null;
-            Reader.ReadNextSymbol();
-            currentLexem = Lexems.Plus;
-        }
-        else if (Reader.CurrentSymbol == '-')
-        {
-            currentName = null;
-            Reader.ReadNextSymbol();
-            currentLexem = Lexems.Minus;
-        }
-        else if (Reader.CurrentSymbol == '*')
-        {
-            currentName = null;
-            Reader.ReadNextSymbol();
-            currentLexem = Lexems.Multiplication;
-        }
-        else if (Reader.CurrentSymbol == '/')
-        {
-            currentName = null;
-            Reader.ReadNextSymbol();
-            currentLexem = Lexems.Division;
+            if (Reader.CurrentSymbol == '0')
+            {
+                currentName = null;
+                Reader.ReadNextSymbol();
+                currentLexem = Lexems.False;
+            }
+            else if (Reader.CurrentSymbol == '1')
+            {
+                currentName = null;
+                Reader.ReadNextSymbol();
+                currentLexem = Lexems.True;
+            }
         }
         else if (Reader.CurrentSymbol == '(')
         {
@@ -123,9 +153,18 @@ public static class LexicalAnalyzer
         }
         else if (Reader.CurrentSymbol == ':')
         {
-            currentName = null;
             Reader.ReadNextSymbol();
-            currentLexem = Lexems.Colon;
+            if (Reader.CurrentSymbol == '=')
+            {
+                currentName = null;
+                Reader.ReadNextSymbol();
+                currentLexem = Lexems.Assign;
+            }
+            else
+            {
+                currentName = null;
+                currentLexem = Lexems.Colon;
+            }
         }
         else if (Reader.CurrentSymbol == ',')
         {
@@ -137,12 +176,24 @@ public static class LexicalAnalyzer
         {
             currentName = null;
             Reader.ReadNextSymbol();
-            currentLexem = Lexems.UnaryOp; // обработка унарного оператора
+            currentLexem = Lexems.Negotiation;
         }
-        else if (Reader.CurrentSymbol == '&' || Reader.CurrentSymbol == '|' || Reader.CurrentSymbol == '^')
+        else if (Reader.CurrentSymbol == '&')
         {
             currentName = null;
-            currentLexem = Lexems.BinaryOp;
+            currentLexem = Lexems.Conjunction;
+            Reader.ReadNextSymbol();
+        }
+        else if (Reader.CurrentSymbol == '|')
+        {
+            currentName = null;
+            currentLexem = Lexems.Disjunction;
+            Reader.ReadNextSymbol();
+        }
+        else if (Reader.CurrentSymbol == '^')
+        {
+            currentName = null;
+            currentLexem = Lexems.Implication;
             Reader.ReadNextSymbol();
         }
         else
@@ -151,6 +202,10 @@ public static class LexicalAnalyzer
         }
     }
 
+    /// <summary>
+    /// Получает идентификатор из исходного кода
+    /// </summary>
+    /// <exception cref="Exception">Выдаёт исключение при превышении максимальной длины имени идентификатора</exception>
     private static void ParseIdentifier()
     {
         string identifier = string.Empty;
@@ -171,26 +226,14 @@ public static class LexicalAnalyzer
         currentLexem = GetKeywordLexem(identifier);
     }
 
-    private static void ParseNumber()
-    {
-        string numberString = string.Empty;
 
-        do
-        {
-            numberString += Reader.CurrentSymbol;
-            Reader.ReadNextSymbol();
-        }
-        while (char.IsDigit(Reader.CurrentSymbol));
-
-        if (!int.TryParse(numberString, out _))
-        {
-            throw new Exception("Ошибка: Переполнение при разборе числа.");
-        }
-
-        currentName = numberString;
-        currentLexem = Lexems.Number;
-    }
-
+    /// <summary>
+    /// Текущая лексема, которая анализируется
+    /// </summary>
     public static Lexems CurrentLexem => currentLexem;
+    
+    /// <summary>
+    /// Текущее имя идентификатора
+    /// </summary>
     public static string? CurrentName => currentName;
 }

@@ -1,91 +1,181 @@
-﻿using System;
-
-namespace Translator.Core
+﻿namespace Translator.Core
 {
-    public class CodeGenerator
+    /// <summary>
+    /// Статический класс, ответственный за генерацию кода во время компиляции.
+    /// </summary>
+    public static class CodeGenerator
     {
-        private int indentLevel = 0;
+        private static List<string> code = new List<string>();
 
-        public string Generate(Node node)
+        /// <summary>
+        /// Добавляет инструкцию в сгенерированный код.
+        /// </summary>
+        /// <param name="instruction">Инструкция для добавления.</param>
+        public static void AddInstruction(string instruction)
         {
-            switch (node.Type)
-            {
-                case "PROGRAM":
-                    return GenerateProgram(node);
-                default:
-                    throw new Exception($"Неизвестный тип узла: {node.Type}");
-            }
+            code.Add(instruction);
         }
 
-        private string GenerateProgram(Node node)
+        /// <summary>
+        /// Объявляет сегмент данных в сгенерированном коде.
+        /// </summary>
+        public static void DeclareDataSegment()
         {
-            return GenerateVariableDeclaration(node.Children[0]) +
-                   GenerateComputationalDescription(node.Children[1]) +
-                   GeneratePrintOperator(node.Children[2]);
+            AddInstruction("data segment para public \"data\"");
         }
 
-        private string GenerateVariableDeclaration(Node node)
+        /// <summary>
+        /// Объявляет сегменты стека и кода в сгенерированном коде.
+        /// </summary>
+        public static void DeclareStackAndCodeSegments()
         {
-            var code = "";
-            foreach (var child in node.Children)
-            {
-                code += GenerateVariableList(child) + Environment.NewLine;
-            }
-            return code;
+            AddInstruction("PRINT_BUF DB ' ' DUP(10)");
+            AddInstruction("BUFEND    DB '$'");
+            AddInstruction("data ends");
+            AddInstruction("stk segment stack");
+            AddInstruction("db 256 dup (\"?\")");
+            AddInstruction("stk ends");
+            AddInstruction("code segment para public \"code\"");
+            AddInstruction("main proc");
+            AddInstruction("assume cs:code,ds:data,ss:stk");
+            AddInstruction("mov ax,data");
+            AddInstruction("mov ds,ax");
         }
 
-        private string GenerateVariableList(Node node)
+        /// <summary>
+        /// Объявляет конец основной процедуры.
+        /// </summary>
+        public static void DeclareMainProcedureEnd()
         {
-            return $"section .bss" + Environment.NewLine +
-                   $"    {node.Children[0].Value} resd 1"; // Для каждой переменной выделяем 1 DWORD
+            AddInstruction("mov ax,4c00h");
+            AddInstruction("int 21h");
+            AddInstruction("main endp");
         }
 
-        private string GenerateComputationalDescription(Node node)
+        /// <summary>
+        /// Объявляет конец сгенерированного кода.
+        /// </summary>
+        public static void DeclareEndOfCode()
         {
-            var code = "section .text" + Environment.NewLine + "    global _start" + Environment.NewLine + "_start:" + Environment.NewLine;
-            foreach (var assignment in node.Children)
-            {
-                code += GenerateAssignment(assignment) + Environment.NewLine;
-            }
-            return code;
+            AddInstruction("code ends");
+            AddInstruction("end main");
         }
 
-        private string GenerateAssignment(Node node)
+        /// <summary>
+        /// Объявляет процедуру печати в сгенерированном коде.
+        /// </summary>
+        public static void DeclarePrintProcedure()
         {
-            var identifier = node.Children[0].Value;
-            var expression = GenerateExpression(node.Children[1]);
-            return $"{identifier} = {expression}"; // Здесь должно быть преобразование в код ассемблера
+            AddInstruction("PRINT PROC NEAR");
+            AddInstruction("MOV CX, 10");
+            AddInstruction("MOV DI, BUFEND - PRINT_BUF");
+            AddInstruction("PRINT_LOOP:");
+            AddInstruction("MOV DX, 0");
+            AddInstruction("DIV CX");
+            AddInstruction("ADD DL, '0'");
+            AddInstruction("MOV [PRINT_BUF + DI - 1], DL");
+            AddInstruction("DEC DI");
+            AddInstruction("CMP AL, 0");
+            AddInstruction("JNE PRINT_LOOP");
+            AddInstruction("LEA DX, PRINT_BUF");
+            AddInstruction("ADD DX, DI");
+            AddInstruction("MOV AH, 09H");
+            AddInstruction("INT 21H");
+            AddInstruction("RET");
+            AddInstruction("PRINT ENDP");
         }
 
-        private string GenerateExpression(Node node)
+        /// <summary>
+        /// Объявляет переменные в сегменте данных на основе таблицы имен.
+        /// </summary>
+        /// <param name="nameTable">Таблица имен, содержащая идентификаторы.</param>
+        public static void DeclareVariables(NameTable nameTable)
         {
-            if (node.Type == "BINARY_EXPRESSION")
-            {
-                var left = GenerateExpression(node.Children[0]);
-                var right = GenerateExpression(node.Children[1]);
-                return $"({left} {node.Value} {right})"; // Пример, нужно будет заменить на реальный ассемблерный код
-            }
-            else if (node.Type == "UNARY_EXPRESSION")
-            {
-                var subExpr = GenerateExpression(node.Children[0]);
-                return $"{node.Value}{subExpr}"; // Пример унарного оператора
-            }
-            else if (node.Type == "CONSTANT")
-            {
-                return node.Value; // Число
-            }
-            else if (node.Type == "IDENTIFIER")
-            {
-                return node.Value; // Идентификатор
-            }
-
-            throw new Exception("Неизвестный тип выражения");
+            nameTable.GetIdentifiers().ForEach(
+            node =>
+                {
+                    AddInstruction($"{node.Name}  dw    1");
+                });
         }
 
-        private string GeneratePrintOperator(Node node)
+        /// <summary>
+        /// Генерация инструкций импликации
+        /// </summary>
+        public static void AddImplicationInstruction()
         {
-            return $"    ; Вывод {node.Value}"; // Генерация кода на печать
+            AddInstruction("pop bx");
+            AddInstruction("pop ax");
+            AddInstruction("not ax");
+            AddInstruction("or ax, bx");
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Генерация инструкций дизъюнкции
+        /// </summary>
+        public static void AddDisjunctionInstruction()
+        {
+            AddInstruction("pop bx");
+            AddInstruction("pop ax");
+            AddInstruction("or ax, bx");
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Генерация инструкций конъюнкции
+        /// </summary>
+        public static void AddConjunctionInstruction()
+        {
+            AddInstruction("pop bx");
+            AddInstruction("pop ax");
+            AddInstruction("and ax, bx");
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Генерация инструкций отрицания
+        /// </summary>
+        public static void AddNegotiationInstruction()
+        {
+            AddInstruction("pop ax");
+            AddInstruction("not ax");
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Генерация инструкций добавления в регистр значения лжи
+        /// </summary>
+        public static void AddExtractFalseInstruction()
+        {
+            AddInstruction("mov ax, " + 0);
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Генерация инструкций добавления в регистр значения правды
+        /// </summary>
+        public static void AddExtractTrueInstruction()
+        {
+            AddInstruction("mov ax, " + 1);
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Генерация инструкций добавления в регистр значения из текущей переменной
+        /// </summary>
+        public static void AddExtractValueInstruction()
+        {
+            AddInstruction("mov ax, " + LexicalAnalyzer.CurrentName);
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
+        /// Получает сгенерированный код в виде массива строк.
+        /// </summary>
+        /// <returns>Массив строк с сгенерированным кодом.</returns>
+        public static string[] GetGeneratedCode()
+        {
+            return code.ToArray();
         }
     }
 }
-

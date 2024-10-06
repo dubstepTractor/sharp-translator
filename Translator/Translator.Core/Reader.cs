@@ -1,6 +1,6 @@
-﻿using System;
-using System.IO;
-
+﻿/// <summary>
+/// Статический класс, отвечающий за чтение символов из файла.
+/// </summary>
 public static class Reader
 {
     private static int lineNumber;
@@ -9,19 +9,36 @@ public static class Reader
 
     private static StreamReader streamReader;
 
+    /// <summary>
+    /// Номер текущей строки.
+    /// </summary>
     public static int LineNumber => lineNumber;
+
+    /// <summary>
+    /// Позиция текущего символа в строке.
+    /// </summary>
     public static int CharacterPositionInLine => characterPositionInLine;
+
+    /// <summary>
+    /// Текущий читаемый символ.
+    /// </summary>
     public static char CurrentSymbol => (char)currentSymbol;
 
+    /// <summary>
+    /// Константа, представляющая конец файла.
+    /// </summary>
     public const int EndOfFile = 65535;
 
+    /// <summary>
+    /// Читает следующий символ из файла и обновляет состояние строки и позиции.
+    /// </summary>
     public static void ReadNextSymbol()
     {
         currentSymbol = streamReader.Read();
 
         if (currentSymbol == EndOfFile)
         {
-            return; // Достигнут конец файла
+            return;
         }
         else if (currentSymbol == '\n')
         {
@@ -30,7 +47,7 @@ public static class Reader
         }
         else if (currentSymbol == '\r' || currentSymbol == '\t')
         {
-            ReadNextSymbol(); // Пропускаем
+            ReadNextSymbol();
             return;
         }
         else
@@ -39,6 +56,10 @@ public static class Reader
         }
     }
 
+    /// <summary>
+    /// Инициализирует чтение из указанного файла.
+    /// </summary>
+    /// <param name="filePath">Путь к файлу для чтения.</param>
     public static void Initialize(string filePath)
     {
         if (streamReader != null)
@@ -59,6 +80,9 @@ public static class Reader
         }
     }
 
+    /// <summary>
+    /// Закрывает поток чтения.
+    /// </summary>
     public static void Close()
     {
         streamReader?.Close();
