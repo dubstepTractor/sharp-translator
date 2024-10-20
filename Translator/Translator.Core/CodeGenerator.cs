@@ -21,7 +21,7 @@
         /// </summary>
         public static void DeclareDataSegment()
         {
-            AddInstruction("data segment para public \"data\"");
+            AddInstruction("data segment");
         }
 
         /// <summary>
@@ -35,9 +35,10 @@
             AddInstruction("stk segment stack");
             AddInstruction("db 256 dup (\"?\")");
             AddInstruction("stk ends");
-            AddInstruction("code segment para public \"code\"");
-            AddInstruction("main proc");
+            AddInstruction("code segment");
             AddInstruction("assume cs:code,ds:data,ss:stk");
+            AddInstruction("start:");
+            AddInstruction("main proc");
             AddInstruction("mov ax,data");
             AddInstruction("mov ds,ax");
         }
@@ -106,6 +107,7 @@
             AddInstruction("pop bx");
             AddInstruction("pop ax");
             AddInstruction("not ax");
+            AddInstruction("and ax, 1"); // Допускаем значения только 0 или 1
             AddInstruction("or ax, bx");
             AddInstruction("push ax");
         }
@@ -135,10 +137,11 @@
         /// <summary>
         /// Генерация инструкций отрицания
         /// </summary>
-        public static void AddNegotiationInstruction()
+        public static void AddNegationInstruction()
         {
             AddInstruction("pop ax");
             AddInstruction("not ax");
+            AddInstruction("and ax, 1"); // Допускаем значения только 0 или 1
             AddInstruction("push ax");
         }
 

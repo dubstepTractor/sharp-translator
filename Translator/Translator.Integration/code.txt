@@ -1,6 +1,0 @@
-﻿Var x, y:Logical;
-Begin
-    x := !(0 | 1);
-    y := (x | 1) & (x ^ 0);
-End;
-Print x;
