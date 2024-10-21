@@ -6,7 +6,7 @@ public enum Lexems
     None, Name, True, False, Logical, Begin, End, Var, Print, Assign,
     LeftBracket, RightBracket, Semi, Comma, EOF,
     Disjunction, Conjunction, Implication,
-    Negotiation, BinaryOp, Colon
+    Negation, BinaryOp, Colon
 }
 
 /// <summary>
@@ -176,7 +176,7 @@ public static class LexicalAnalyzer
         {
             currentName = null;
             Reader.ReadNextSymbol();
-            currentLexem = Lexems.Negotiation;
+            currentLexem = Lexems.Negation;
         }
         else if (Reader.CurrentSymbol == '&')
         {

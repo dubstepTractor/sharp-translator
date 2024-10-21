@@ -221,14 +221,14 @@
         /// <returns>Тип операции</returns>
         private tType ParseSubexpression()
         {
-            if (LexicalAnalyzer.CurrentLexem == Lexems.Negotiation)
+            if (LexicalAnalyzer.CurrentLexem == Lexems.Negation)
             {
                 LexicalAnalyzer.ParseNextLexem();
                 tType type = ParseSubexpression();
 
                 if (type == tType.Bool)
                 {
-                    CodeGenerator.AddNegotiationInstruction();
+                    CodeGenerator.AddNegationInstruction();
                     return tType.Bool;
                 }
                 else
