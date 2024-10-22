@@ -5,7 +5,7 @@ public enum Lexems
 {
     None, Name, True, False, Logical, Begin, End, Var, Print, Assign,
     LeftBracket, RightBracket, Semi, Comma, EOF,
-    Disjunction, Conjunction, Implication,
+    Disjunction, Conjunction, Implication, ExDisjunction,
     Negation, BinaryOp, Colon
 }
 
@@ -69,6 +69,11 @@ public static class LexicalAnalyzer
         AddKeyword("Var", Lexems.Var);
         AddKeyword("Print", Lexems.Print);
         AddKeyword("Logical", Lexems.Logical);
+        AddKeyword("Boolean", Lexems.Logical);
+        AddKeyword(".NOT.", Lexems.Negation);
+        AddKeyword(".AND.", Lexems.Conjunction);
+        AddKeyword(".OR.", Lexems.Disjunction);
+        AddKeyword(".XOR.", Lexems.ExDisjunction);
 
         Reader.Initialize(filePath);
         currentLexem = Lexems.None;
@@ -114,7 +119,11 @@ public static class LexicalAnalyzer
             return;
         }
 
-        if (char.IsLetter(Reader.CurrentSymbol))
+        if (Reader.CurrentSymbol == '.')
+        {
+            ParseOperator();
+        }
+        else if (char.IsLetter(Reader.CurrentSymbol))
         {
             ParseIdentifier();
         }
@@ -220,6 +229,30 @@ public static class LexicalAnalyzer
         if (identifier.Length >= MaxIdentifierLength)
         {
             throw new Exception("Ошибка: Длина идентификатора превышает максимальную допустимую.");
+        }
+
+        currentName = identifier;
+        currentLexem = GetKeywordLexem(identifier);
+    }
+
+    /// <summary>
+    /// Получает оператор из исходного кода
+    /// </summary>
+    /// <exception cref="Exception">Выдаёт исключение при превышении максимальной длины оператора</exception>
+    private static void ParseOperator()
+    {
+        string identifier = string.Empty;
+
+        do
+        {
+            identifier += Reader.CurrentSymbol;
+            Reader.ReadNextSymbol();
+        }
+        while ((char.IsLetter(Reader.CurrentSymbol) || Reader.CurrentSymbol == '.') && identifier.Length < MaxIdentifierLength);
+
+        if (identifier.Length >= MaxIdentifierLength)
+        {
+            throw new Exception("Ошибка: Длина оператора превышает максимальную допустимую.");
         }
 
         currentName = identifier;

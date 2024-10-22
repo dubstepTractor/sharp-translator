@@ -9,9 +9,9 @@ const string ProgramFileName = "compile";
 // Запуск теста в DOSBox
 void RunDosBoxTest(string fileName, string code)
 {
-    if (!File.Exists(DosBoxProgramData + fileName + ".asm"))
+    if (!File.Exists(DosBoxApplicationPath))
     {
-        throw new FileNotFoundException("Не найден файл: " + DosBoxProgramData + fileName + ".asm");
+        throw new FileNotFoundException("Не найден файл: " + DosBoxApplicationPath);
     }
 
     File.WriteAllText(DosBoxProgramData + fileName + ".asm", code);

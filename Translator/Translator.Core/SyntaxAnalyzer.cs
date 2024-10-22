@@ -170,13 +170,30 @@
         /// <returns>Тип операции</returns>
         private tType ParseImplication()
         {
-            tType type = ParseDisjunction();
+            tType type = ParseExDisjunction();
             while (LexicalAnalyzer.CurrentLexem == Lexems.Implication)
             {
                 Lexems operatorLexem = LexicalAnalyzer.CurrentLexem;
                 LexicalAnalyzer.ParseNextLexem();
-                type = ParseDisjunction();
+                type = ParseExDisjunction();
                 CodeGenerator.AddImplicationInstruction();
+            }
+            return type;
+        }
+
+        /// <summary>
+        /// Парсит исключающее ИЛИ
+        /// </summary>
+        /// <returns>Тип операции</returns>
+        private tType ParseExDisjunction()
+        {
+            tType type = ParseDisjunction();
+            while (LexicalAnalyzer.CurrentLexem == Lexems.ExDisjunction)
+            {
+                Lexems operatorLexem = LexicalAnalyzer.CurrentLexem;
+                LexicalAnalyzer.ParseNextLexem();
+                type = ParseDisjunction();
+                CodeGenerator.AddExDisjunctionInstruction();
             }
             return type;
         }

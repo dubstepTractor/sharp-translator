@@ -124,6 +124,17 @@
         }
 
         /// <summary>
+        /// Генерация инструкций исключающего ИЛИ
+        /// </summary>
+        public static void AddExDisjunctionInstruction()
+        {
+            AddInstruction("pop bx");
+            AddInstruction("pop ax");
+            AddInstruction("xor ax, bx");
+            AddInstruction("push ax");
+        }
+
+        /// <summary>
         /// Генерация инструкций конъюнкции
         /// </summary>
         public static void AddConjunctionInstruction()
